@@ -1,683 +1,363 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>Астрологический калькулятор PRO 2.0</title>
-    <link rel="apple-touch-icon" sizes="180x180" href="icons/icon224.png" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="ASTR PRO 2.0" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Астрологический Калькулятор PRO 3.0</title>
     <style>
-        /* Стили темы Moon (темная) как базовые */
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
-            font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
-            -webkit-tap-highlight-color: transparent;
         }
-
-        html, body {
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-        }
-
+        
         body {
-            background: linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0a0a0a;
             color: #e0e0e0;
-            padding: 10px;
-            -webkit-overflow-scrolling: touch;
-            overflow-y: auto;
+            padding: 20px;
+            min-height: 100vh;
         }
-
-        body.theme-moon {
-            background:
-                radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%),
-                linear-gradient(135deg, #0f0f1e 0%, #1a1a2e 50%, #16213e 100%);
-            color: #e0e0e0;
-        }
-
-        body.theme-moon .container {
-            background: rgba(15, 15, 30, 0.95);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 15px;
-            max-width: 960px;
+        
+        .container {
+            max-width: 100%;
             margin: 0 auto;
         }
-
-        body.theme-moon .header h1 {
-            background: linear-gradient(45deg, #a78bfa 0%, #7dd3fc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            font-weight: 700;
-            font-size: 1.6rem;
-            margin-bottom: 8px;
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
         }
-
-        .theme-switcher {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 20px;
-        }
-
-        .theme-option {
-            width: 36px;
-            height: 36px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid transparent;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            color: #8a8a8a;
-            transition: all 0.3s ease;
-        }
-
-        .theme-option.active {
-            border-color: #fff;
-            color: #e0e0e0;
-            transform: scale(1.15);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-
-        .input-section {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
+        
         .input-group {
-            padding: 12px;
-            border-radius: 12px;
-            background: rgba(30, 30, 60, 0.8);
-            border: 1px solid rgba(102, 126, 234, 0.3);
-            transition: all 0.3s ease;
+            background: rgba(174, 136, 181, 0.1);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(174, 136, 181, 0.3);
         }
-
-        .input-group:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 20px rgba(124, 58, 237, 0.5);
+        
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
         }
-
+        
+        .input-field {
+            flex: 1;
+            min-width: 120px;
+        }
+        
         label {
             display: block;
-            margin-bottom: 6px;
-            font-weight: 600;
-            font-size: 0.9rem;
-            color: #c4b5fd;
+            margin-bottom: 5px;
+            color: #AE88B5;
+            font-size: 14px;
         }
-
-        input[type="date"], input[type="time"], select {
+        
+        input, select {
             width: 100%;
-            padding: 10px;
+            padding: 12px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(174, 136, 181, 0.3);
             border-radius: 8px;
-            border: none;
-            background: rgba(50, 50, 80, 0.8);
-            color: #e0e0e0;
-            font-size: 0.9rem;
-            transition: all 0.3s ease;
-        }
-
-        input[type="date"]:focus, input[type="time"]:focus, select:focus {
-            outline: none;
-            box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.6);
-            background-color: rgba(70, 70, 110, 0.9);
-        }
-
-        button.calculate-btn {
-            width: 100%;
-            padding: 16px;
-            background: linear-gradient(45deg, #7c3aed 0%, #5b21b6 100%);
-            border: none;
-            border-radius: 15px;
             color: #fff;
-            font-size: 1.2rem;
-            font-weight: 700;
-            cursor: pointer;
-            transition: box-shadow 0.3s ease, transform 0.2s ease;
+            font-size: 16px;
         }
-
-        button.calculate-btn:hover {
-            box-shadow: 0 8px 25px rgba(124, 58, 237, 0.6);
-            transform: translateY(-3px);
-        }
-
-        button.calculate-btn:active {
-            transform: translateY(-1px);
-        }
-
-        .content-area {
-            margin-top: 20px;
-        }
-
-        .tabs {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-bottom: 15px;
-        }
-
-        .tab {
-            padding: 10px 20px;
+        
+        button {
+            width: 100%;
+            padding: 15px;
+            background: linear-gradient(135deg, #AE88B5, #889AB5);
+            border: none;
             border-radius: 12px;
-            background: rgba(102, 126, 234, 0.3);
-            color: #a78bfa;
-            font-weight: 600;
+            color: #fff;
+            font-size: 18px;
             cursor: pointer;
-            transition: background-color 0.3s ease, color 0.3s ease;
+            transition: transform 0.2s;
         }
-
-        .tab.active {
-            background: #7c3aed;
-            color: white;
-            box-shadow: 0 5px 15px rgba(124, 58, 237, 0.6);
+        
+        button:active {
+            transform: scale(0.98);
         }
-
-        .tab-content {
-            display: none;
-            background: rgba(30, 30, 60, 0.85);
-            border-radius: 18px;
+        
+        .chart-container {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 16px;
             padding: 20px;
-            color: #e0e0e0;
-            min-height: 320px;
+            margin-top: 20px;
+            position: relative;
+            overflow: hidden;
         }
-
-        .tab-content.active {
+        
+        #natalChart {
+            width: 100%;
+            height: 300px;
+            max-width: 500px;
+            margin: 0 auto;
             display: block;
         }
-
-        .chart-wrapper {
-            width: 300px;
-            height: 300px;
-            margin: 0 auto 20px;
-        }
-
-        .planet-list, .aspect-list, .house-list {
-            max-width: 540px;
-            margin: 0 auto;
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-            gap: 15px;
-        }
-
-        .item-box {
-            background: rgba(40, 40, 70, 0.8);
+        
+        .transits {
+            margin-top: 20px;
+            background: rgba(136, 155, 181, 0.1);
             border-radius: 12px;
-            padding: 12px;
-            font-size: 0.9rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            padding: 15px;
         }
-
-        .item-symbol {
-            font-size: 1.2rem;
-            margin-right: 8px;
+        
+        .planet-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
         }
-
-        .forecast-text {
-            max-width: 600px;
-            margin: 0 auto;
-            font-size: 1rem;
-            line-height: 1.5;
-            padding: 10px 0;
-        }
-
-        .loading {
-            display: none;
+        
+        .planet-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 10px;
+            border-radius: 8px;
             text-align: center;
-            padding: 20px;
-            font-size: 1.1rem;
+        }
+        
+        .planet-name {
+            color: #AE88B5;
+            font-weight: bold;
+        }
+        
+        .prediction {
+            margin-top: 20px;
+            background: rgba(174, 136, 181, 0.1);
+            border-radius: 12px;
+            padding: 15px;
+            border-left: 4px solid #AE88B5;
+        }
+        
+        @media (max-width: 600px) {
+            .input-row {
+                flex-direction: column;
+            }
+            
+            .input-field {
+                min-width: 100%;
+            }
         }
     </style>
 </head>
-<body class="theme-moon">
+<body>
     <div class="container">
-        <header class="header">
-            <h1><i class="fas fa-stars"></i> Астрологический калькулятор PRO 2.0</h1>
-            <p>Профессиональные астрологические расчеты с реальными эфемеридами NASA</p>
-            <p style="font-size: 0.75rem; opacity: 0.7;">Использует точные астрономические алгоритмы VSOP87 и Swiss Ephemeris</p>
-        </header>
-
-        <div class="theme-switcher" role="tablist" aria-label="Выбор темы">
-            <button class="theme-option theme-moon active" data-theme="theme-moon" title="Тема Луна" aria-selected="true" role="tab"><i class="fas fa-moon"></i></button>
-            <button class="theme-option theme-sun" data-theme="theme-sun" title="Тема Солнце" aria-selected="false" role="tab"><i class="fas fa-sun"></i></button>
-            <button class="theme-option theme-fullmoon" data-theme="theme-fullmoon" title="Тема Полнолуние" aria-selected="false" role="tab"><i class="fas fa-circle"></i></button>
-            <button class="theme-option theme-eclipse" data-theme="theme-eclipse" title="Тема Затмение" aria-selected="false" role="tab"><i class="fas fa-circle-notch"></i></button>
+        <div class="header">
+            <h1>✨ Астрологический Калькулятор PRO 3.0</h1>
         </div>
-
-        <section class="input-section" aria-label="Ввод данных для расчета">
-            <div class="input-group">
-                <label for="birthDate"><i class="fas fa-calendar-alt"></i> Дата рождения</label>
-                <input type="date" id="birthDate" min="1900-01-01" max="2099-12-31" value="1990-01-01" required />
+        
+        <div class="input-group">
+            <div class="input-row">
+                <div class="input-field">
+                    <label>Дата рождения</label>
+                    <input type="date" id="birthDate" min="1970-01-01">
+                </div>
+                <div class="input-field">
+                    <label>Время рождения</label>
+                    <input type="time" id="birthTime">
+                </div>
             </div>
-            <div class="input-group">
-                <label for="birthTime"><i class="fas fa-clock"></i> Время рождения</label>
-                <input type="time" id="birthTime" value="12:00" required />
+            <div class="input-row">
+                <div class="input-field">
+                    <label>Широта</label>
+                    <input type="number" id="latitude" placeholder="55.7558" step="0.0001">
+                </div>
+                <div class="input-field">
+                    <label>Долгота</label>
+                    <input type="number" id="longitude" placeholder="37.6176" step="0.0001">
+                </div>
             </div>
-            <div class="input-group">
-                <label for="birthPlace"><i class="fas fa-map-marker-alt"></i> Место рождения</label>
-                <select id="birthPlace" aria-required="true" required>
-                    <option value="Москва" data-lat="55.7558" data-lng="37.6173" data-tz="3">Москва</option>
-                    <option value="Санкт-Петербург" data-lat="59.9343" data-lng="30.3351" data-tz="3">Санкт-Петербург</option>
-                    <option value="Иваново" data-lat="56.9972" data-lng="40.9714" data-tz="3" selected>Иваново</option>
-                    <option value="Липецк" data-lat="52.6088" data-lng="39.5992" data-tz="3">Липецк</option>
-                    <option value="Екатеринбург" data-lat="56.8389" data-lng="60.6057" data-tz="5">Екатеринбург</option>
-                    <option value="Новосибирск" data-lat="55.0084" data-lng="82.9357" data-tz="7">Новосибирск</option>
-                    <option value="Казань" data-lat="55.8304" data-lng="49.0661" data-tz="3">Казань</option>
-                    <option value="Нижний Новгород" data-lat="56.2965" data-lng="43.9361" data-tz="3">Нижний Новгород</option>
-                    <option value="Челябинск" data-lat="55.1644" data-lng="61.4368" data-tz="5">Челябинск</option>
-                    <option value="Самара" data-lat="53.2415" data-lng="50.2212" data-tz="4">Самара</option>
-                    <option value="Омск" data-lat="54.9885" data-lng="73.3242" data-tz="6">Омск</option>
-                    <option value="Ростов-на-Дону" data-lat="47.2225" data-lng="39.7188" data-tz="3">Ростов-на-Дону</option>
-                    <option value="Уфа" data-lat="54.7351" data-lng="55.9587" data-tz="5">Уфа</option>
-                    <option value="Красноярск" data-lat="56.0153" data-lng="92.8932" data-tz="7">Красноярск</option>
-                    <option value="Воронеж" data-lat="51.6720" data-lng="39.1843" data-tz="3">Воронеж</option>
-                    <option value="Пермь" data-lat="58.0105" data-lng="56.2502" data-tz="5">Пермь</option>
-                    <option value="Волгоград" data-lat="48.7080" data-lng="44.5133" data-tz="3">Волгоград</option>
-                </select>
-            </div>
-            <div class="input-group">
-                <label for="currentDate"><i class="fas fa-calendar-day"></i> Текущая дата для транзитов</label>
-                <input type="date" id="currentDate" />
-            </div>
-            <div class="input-group">
-                <label for="houseSystem"><i class="fas fa-chart-bar"></i> Система домов</label>
-                <select id="houseSystem" aria-required="true">
-                    <option value="placidus">Плацидус (рекомендуется)</option>
-                    <option value="koch">Кох</option>
-                    <option value="regiomontanus">Региомонтан</option>
-                    <option value="campanus">Кампанус</option>
-                    <option value="equal">Равные дома</option>
-                    <option value="whole">Целые знаки</option>
-                </select>
-            </div>
-        </section>
-
-        <button class="calculate-btn" id="calculateBtn" aria-label="Рассчитать полный гороскоп">
-            <i class="fas fa-calculator"></i> Рассчитать полный гороскоп
-        </button>
-
-        <div id="loading" class="loading" role="status" aria-live="polite" aria-atomic="true" style="display:none;">
-            <div class="spinner">
-                <i class="fas fa-spinner fa-spin fa-3x"></i>
-            </div>
-            <p>Выполняются точные астрономические расчеты...</p>
-            <p style="font-size:0.8rem; opacity:0.7;">Используются эфемериды NASA и алгоритмы VSOP87</p>
+            <button onclick="calculateChart()">Рассчитать натальную карту</button>
         </div>
-
-        <main class="content-area" aria-live="polite" aria-atomic="true">
-            <nav class="tabs" role="tablist" aria-label="Разделы гороскопа">
-                <button class="tab active" data-tab="natal" role="tab" aria-selected="true" aria-controls="natal-tab" id="tab-natal">Натальная карта</button>
-                <button class="tab" data-tab="transits" role="tab" aria-selected="false" aria-controls="transits-tab" id="tab-transits">Транзиты</button>
-                <button class="tab" data-tab="aspects" role="tab" aria-selected="false" aria-controls="aspects-tab" id="tab-aspects">Аспекты</button>
-                <button class="tab" data-tab="forecast" role="tab" aria-selected="false" aria-controls="forecast-tab" id="tab-forecast">Прогноз</button>
-            </nav>
-
-            <section id="natal-tab" class="tab-content active" role="tabpanel" aria-labelledby="tab-natal">
-                <h2><i class="fas fa-chart-pie"></i> Натальная карта</h2>
-                <div class="chart-wrapper">
-                    anvas id="natalChart" width="300" height="300" aria-label="Диаграмма натальной карты"></canvas>
-                </div>
-                <div class="planet-list" id="planetList"></div>
-                <h3>Дома гороскопа</h3>
-                <div class="house-list" id="housesList"></div>
-            </section>
-
-            <section id="transits-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-transits">
-                <h2><i class="fas fa-sync-alt"></i> Текущие транзиты</h2>
-                <div class="chart-wrapper">
-                    anvas id="transitChart" width="300" height="300" aria-label="Диаграмма транзитов"></canvas>
-                </div>
-                <div class="planet-list" id="transitList"></div>
-            </section>
-
-            <section id="aspects-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-aspects">
-                <h2><i class="fas fa-project-diagram"></i> Натальные аспекты</h2>
-                <div class="aspect-list" id="natalAspectsGrid"></div>
-
-                <h2><i class="fas fa-exchange-alt"></i> Транзитные аспекты</h2>
-                <div class="aspect-list" id="transitAspectsGrid"></div>
-            </section>
-
-            <section id="forecast-tab" class="tab-content" role="tabpanel" aria-labelledby="tab-forecast">
-                <h2><i class="fas fa-crystal-ball"></i> Персональный астрологический прогноз</h2>
-                <div class="forecast-text" id="forecastText"></div>
-                <h3><i class="fas fa-chart-line"></i> Астрологические тенденции</h3>
-                <div class="forecast-text" id="trendsText"></div>
-            </section>
-        </main>
+        
+        <div class="chart-container">
+            <canvas id="natalChart"></canvas>
+        </div>
+        
+        <div class="transits" id="transits">
+            <h3>Текущие транзиты</h3>
+            <div class="planet-info" id="planetInfo"></div>
+        </div>
+        
+        <div class="prediction" id="prediction">
+            <h3>Астрологический прогноз</h3>
+            <p id="predictionText">Введите данные для получения прогноза</p>
+        </div>
     </div>
 
     <script>
-        // === НАСТРОЙКИ И ДАННЫЕ PLANETS, SIGNS, ASPECTS, INTERPRETATIONS ===
-        // Планеты с символами, скоростью, орбами, цветами
-        const PLANETS = [
-            { name: 'Солнце', symbol: '☉', color: '#FFD700', orb: 15, isLuminary: true },
-            { name: 'Луна', symbol: '☽', color: '#C0C0C0', orb: 12, isLuminary: true },
-            { name: 'Меркурий', symbol: '☿', color: '#CD7F32', orb: 7 },
-            { name: 'Венера', symbol: '♀', color: '#FFC0CB', orb: 7 },
-            { name: 'Марс', symbol: '♂', color: '#FF4500', orb: 8 },
-            { name: 'Юпитер', symbol: '♃', color: '#FFA500', orb: 9 },
-            { name: 'Сатурн', symbol: '♄', color: '#8B4513', orb: 9 },
-            { name: 'Уран', symbol: '♅', color: '#00FFFF', orb: 5 },
-            { name: 'Нептун', symbol: '♆', color: '#0000FF', orb: 5 },
-            { name: 'Плутон', symbol: '♇', color: '#800080', orb: 5 },
-        ];
-
-        const ASPECTS = [
-            { name: 'Соединение', degrees: 0, orb: 8, symbol: '☌', color: '#FFD700', strength: 5 },
-            { name: 'Секстиль', degrees: 60, orb: 5, symbol: '⚹', color: '#00FF00', strength: 3 },
-            { name: 'Квадрат', degrees: 90, orb: 6, symbol: '□', color: '#FF4500', strength: 4 },
-            { name: 'Трин', degrees: 120, orb: 6, symbol: '△', color: '#00BFFF', strength: 4 },
-            { name: 'Оппозиция', degrees: 180, orb: 7, symbol: '☍', color: '#8A2BE2', strength: 5 },
-            { name: 'Полусекстиль', degrees: 30, orb: 2, symbol: '⚺', color: '#32CD32', strength: 1 },
-            { name: 'Квинконс', degrees: 150, orb: 2, symbol: '⚻', color: '#FF69B4', strength: 2 },
-        ];
-
-        // === ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ===
-
-        function normalizeAngle(angle) {
-            return ((angle % 360) + 360) % 360;
-        }
-
-        function degToRad(deg) {
-            return (deg * Math.PI) / 180;
-        }
-
-        function radToDeg(rad) {
-            return (rad * 180) / Math.PI;
-        }
-
-        // Расчёт Юлианской даты по дате и времени и часовому поясу
-        function toJulianDate(date, time, tz) {
-            let dt = new Date(date + 'T' + time + ':00Z');
-            dt.setUTCHours(dt.getUTCHours() - tz); // Коррекция по часовому поясу
-            let Y = dt.getUTCFullYear();
-            let M = dt.getUTCMonth() + 1;
-            let D = dt.getUTCDate();
-            let H = dt.getUTCHours() + dt.getUTCMinutes() / 60 + dt.getUTCSeconds() / 3600;
-
-            if (M <= 2) {
-                Y -= 1;
-                M += 12;
-            }
-            let A = Math.floor(Y / 100);
-            let B = 2 - A + Math.floor(A / 4);
-            let JD = Math.floor(365.25 * (Y + 4716)) + Math.floor(30.6001 * (M + 1)) + D + B - 1524.5 + H / 24;
-            return JD;
-        }
-
-        // Пример упрощённого VSOP87 для Солнца (должно быть полноценно расширено)
-        function calculateSunLongitude(T) {
-            // Упрощённый расчет с использованием средних значений для демонстрации
-            // Полный VSOP87 требует обширных коэффициентов — рекомендовано подключать библиотеку
-            const L0 = 280.46646 + 36000.76983 * T + 0.0003032 * T * T;
-            const M = 357.52911 + 35999.05029 * T - 0.0001537 * T * T;
-            const M_rad = degToRad(M);
-            const C = (1.914602 - 0.004817 * T - 0.000014 * T * T) * Math.sin(M_rad) +
-                      (0.019993 - 0.000101 * T) * Math.sin(2 * M_rad) +
-                      0.000289 * Math.sin(3 * M_rad);
-            const trueLong = L0 + C;
-            return normalizeAngle(trueLong);
-        }
-
-        // Функция расчета положений планет (для примера, возвращает случайные данные)
-        // В реальном калькуляторе должно быть полноценное VSOP87 или Swiss Ephemeris
-        function calculatePlanetsPositions(jd) {
-            const T = (jd - 2451545.0) / 36525;
-            const positions = [];
-            for (let p of PLANETS) {
-                // Здесь надо подставить точные VSOP87 расчеты для каждой планеты
-                // Для примера используем смещение по орбите, основанное на дате
-                let angle = normalizeAngle((jd * 360 / 365.25) + Math.random() * 30);
-                positions.push({ name: p.name, symbol: p.symbol, color: p.color, lon: angle });
-            }
+        // Астрологические данные
+        const planets = ['☉', '☽', '☿', '♀', '♂', '♃', '♄', '♅', '♆', 'ⱷ'];
+        const planetNames = ['Солнце', 'Луна', 'Меркурий', 'Венера', 'Марс', 'Юпитер', 'Сатурн', 'Уран', 'Нептун', 'Плутон'];
+        
+        // Расчет позиций планет (упрощенный алгоритм)
+        function calculatePlanetPositions(date, time, lat, lon) {
+            const positions = {};
+            const jd = julianDay(date, time);
+            
+            planetNames.forEach((name, index) => {
+                // Упрощенный расчет на основе среднего движения
+                const baseAngle = (jd - 2440587.5) * (360 / 365.25) * (index + 1) % 360;
+                positions[name] = {
+                    longitude: baseAngle,
+                    latitude: 0,
+                    sign: getZodiacSign(baseAngle)
+                };
+            });
+            
             return positions;
         }
-
-        // Функция поиска аспектов между двумя наборами планет
-        function findAspects(planetsA, planetsB) {
-            const results = [];
-            for (let planetA of planetsA) {
-                for (let planetB of planetsB) {
-                    if (planetA.name === planetB.name) continue; // Исключаем аспекты одной планеты с собой
-                    let diff = Math.abs(planetA.lon - planetB.lon);
-                    if (diff > 180) diff = 360 - diff;
-                    for (let asp of ASPECTS) {
-                        if (diff <= asp.orb) {
-                            results.push({
-                                aspect: asp.name,
-                                symbol: asp.symbol,
-                                color: asp.color,
-                                planetA,
-                                planetB,
-                                diff: diff.toFixed(2),
-                                orb: asp.orb
-                            });
-                        }
-                    }
-                }
-            }
-            // Уникализация аспектов (A–B и B–A)
-            const unique = [];
-            for (let a of results) {
-                if (!unique.some(u =>
-                    (u.planetA.name === a.planetB.name && u.planetB.name === a.planetA.name &&
-                     u.aspect === a.aspect))) {
-                    unique.push(a);
-                }
-            }
-            return unique;
+        
+        function julianDay(date, time) {
+            const [year, month, day] = date.split('-').map(Number);
+            const [hours, minutes] = time.split(':').map(Number);
+            
+            const a = Math.floor((14 - month) / 12);
+            const y = year + 4800 - a;
+            const m = month + 12 * a - 3;
+            
+            return day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045 + (hours - 12) / 24 + minutes / 1440;
         }
-
-        // Рендер списка планет
-        function renderPlanetList(containerId, planets) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            for (let p of planets) {
-                const div = document.createElement('div');
-                div.className = 'item-box';
-                div.innerHTML = `<span class="item-symbol" style="color: ${p.color}">${p.symbol}</span>
-                                 <span>${p.name}</span>
-                                 <span>${p.lon.toFixed(2)}°</span>`;
-                container.appendChild(div);
-            }
+        
+        function getZodiacSign(angle) {
+            const signs = ['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'];
+            return signs[Math.floor(angle / 30)];
         }
-
-        // Рендер аспектов
-        function renderAspectList(containerId, aspects) {
-            const container = document.getElementById(containerId);
-            container.innerHTML = '';
-            if (!aspects.length) {
-                container.textContent = 'Аспекты не обнаружены.';
-                return;
+        
+        // Отрисовка натальной карты
+        function drawChart(positions) {
+            const canvas = document.getElementById('natalChart');
+            const ctx = canvas.getContext('2d');
+            const centerX = canvas.width / 2;
+            const centerY = canvas.height / 2;
+            const radius = Math.min(centerX, centerY) - 20;
+            
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Очистка
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Рисуем зодиакальный круг
+            ctx.strokeStyle = '#AE88B5';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI);
+            ctx.stroke();
+            
+            // Рисуем знаки зодиака
+            for (let i = 0; i < 12; i++) {
+                const angle = (i * 30 - 90) * Math.PI / 180;
+                const x = centerX + (radius + 15) * Math.cos(angle);
+                const y = centerY + (radius + 15) * Math.sin(angle);
+                
+                ctx.fillStyle = '#889AB5';
+                ctx.font = '16px Arial';
+                ctx.textAlign = 'center';
+                ctx.fillText(['♈', '♉', '♊', '♋', '♌', '♍', '♎', '♏', '♐', '♑', '♒', '♓'][i], x, y);
             }
-            for (let asp of aspects) {
-                const div = document.createElement('div');
-                div.className = 'item-box';
-                div.style.borderLeft = `4px solid ${asp.color}`;
-                div.innerHTML = `<span>${asp.planetA.symbol} ${asp.planetA.name}</span>
-                                <span style="font-weight:700;">${asp.symbol} ${asp.aspect}</span>
-                                <span>${asp.planetB.symbol} ${asp.planetB.name}</span>
-                                <span>Отклонение: ${asp.diff}° (орб: ${asp.orb}°)</span>`;
-                container.appendChild(div);
-            }
-        }
-
-        // Инициализация и управление вкладками
-        function initTabs() {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => {
-                tab.addEventListener('click', () => {
-                    const target = tab.dataset.tab;
-                    // Снять активность со всех вкладок и контента
-                    tabs.forEach(t => { t.classList.remove('active'); t.setAttribute('aria-selected', 'false'); });
-                    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-                    // Активировать выбранные
-                    tab.classList.add('active');
-                    tab.setAttribute('aria-selected', 'true');
-                    const content = document.getElementById(target + '-tab');
-                    if (content) content.classList.add('active');
-                });
+            
+            // Рисуем планеты
+            Object.entries(positions).forEach(([name, pos], index) => {
+                const angle = (pos.longitude - 90) * Math.PI / 180;
+                const planetRadius = radius * 0.8 - (index * 15);
+                const x = centerX + planetRadius * Math.cos(angle);
+                const y = centerY + planetRadius * Math.sin(angle);
+                
+                ctx.fillStyle = '#fff';
+                ctx.beginPath();
+                ctx.arc(x, y, 4, 0, 2 * Math.PI);
+                ctx.fill();
+                
+                ctx.fillStyle = '#AE88B5';
+                ctx.font = '12px Arial';
+                ctx.fillText(planets[planetNames.indexOf(name)], x + 8, y - 8);
             });
         }
-
-        // Переключение тем
-        function initThemeSwitcher() {
-            const buttons = document.querySelectorAll('.theme-option');
-            buttons.forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.body.className = '';
-                    const theme = btn.dataset.theme;
-                    document.body.classList.add(theme);
-                    buttons.forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                });
-            });
-        }
-
-        // Загрузка текущей даты в поле транзитов
-        function setCurrentDateDefault() {
-            const input = document.getElementById('currentDate');
+        
+        // Расчет транзитов
+        function calculateTransits() {
             const now = new Date();
-            const yyyy = now.getFullYear();
-            const mm = String(now.getMonth() + 1).padStart(2, '0');
-            const dd = String(now.getDate()).padStart(2, '0');
-            input.value = `${yyyy}-${mm}-${dd}`;
+            const currentPositions = calculatePlanetPositions(
+                now.toISOString().split('T')[0],
+                now.toTimeString().slice(0, 5),
+                55.7558, 37.6176
+            );
+            
+            const infoDiv = document.getElementById('planetInfo');
+            infoDiv.innerHTML = '';
+            
+            Object.entries(currentPositions).forEach(([name, pos]) => {
+                const card = document.createElement('div');
+                card.className = 'planet-card';
+                card.innerHTML = `
+                    
+${name}
+
+                    
+${pos.sign} ${pos.longitude.toFixed(1)}°
+
+                `;
+                infoDiv.appendChild(card);
+            });
+            
+            return currentPositions;
         }
-
-        // Основная функция вычислений и отображения результатов
-        async function calculateHoroscope() {
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
-
-            // Сбор входных данных
-            const birthDate = document.getElementById('birthDate').value;
-            const birthTime = document.getElementById('birthTime').value;
-            const birthPlaceSelect = document.getElementById('birthPlace');
-            const birthPlaceOption = birthPlaceSelect.selectedOptions[0];
-            const lat = parseFloat(birthPlaceOption.getAttribute('data-lat'));
-            const lng = parseFloat(birthPlaceOption.getAttribute('data-lng'));
-            const tz = parseFloat(birthPlaceOption.getAttribute('data-tz'));
-            const currentDate = document.getElementById('currentDate').value;
-            const houseSystem = document.getElementById('houseSystem').value;
-
-            // Проверка обязательных полей
-            if (!birthDate || !birthTime || !currentDate || isNaN(lat) || isNaN(lng) || isNaN(tz)) {
-                alert('Пожалуйста, заполните все обязательные поля корректно.');
-                loading.style.display = 'none';
+        
+        // Генерация прогноза
+        function generatePrediction(natal, transits) {
+            const predictions = [
+                "Сегодня благоприятный день для важных решений",
+                "Внимательнее отнеситесь к финансовым вопросам",
+                "Период активизации в личных отношениях",
+                "Хорошее время для творческих начинаний",
+                "Возможны неожиданные встречи"
+            ];
+            
+            const randomPrediction = predictions[Math.floor(Math.random() * predictions.length)];
+            document.getElementById('predictionText').textContent = randomPrediction;
+        }
+        
+        // Основная функция расчета
+        function calculateChart() {
+            const date = document.getElementById('birthDate').value;
+            const time = document.getElementById('birthTime').value;
+            const lat = parseFloat(document.getElementById('latitude').value) || 55.7558;
+            const lon = parseFloat(document.getElementById('longitude').value) || 37.6176;
+            
+            if (!date || !time) {
+                alert('Пожалуйста, введите дату и время рождения');
                 return;
             }
-
-            // Вычисление Юлианской даты рождения и текущей даты
-            const jdBirth = toJulianDate(birthDate, birthTime, tz);
-            const jdCurrent = toJulianDate(currentDate, '12:00', tz); // По умолчанию 12:00 для транзитов
-
-            // Расчет позиций планет натала и транзитов
-            const natalPlanets = calculatePlanetsPositions(jdBirth);
-            const transitPlanets = calculatePlanetsPositions(jdCurrent);
-
-            // Для демо простой расчет домов (заполнить реальной логикой)
-            // В настоящей версии нужно масштабировать логику по домам Плацидуса и другим
-            const houses = [];
-            for (let i = 1; i <= 12; i++) {
-                houses.push({
-                    house: i,
-                    cusp: normalizeAngle((i - 1) * 30 + 10) // Просто сдвиг в 10°
-                });
-            }
-
-            // Поиск аспектов
-            const natalAspects = findAspects(natalPlanets, natalPlanets);
-            const transitAspects = findAspects(natalPlanets, transitPlanets);
-
-            // Вывод данных
-            renderPlanetList('planetList', natalPlanets);
-            renderPlanetList('transitList', transitPlanets);
-            renderAspectList('natalAspectsGrid', natalAspects);
-            renderAspectList('transitAspectsGrid', transitAspects);
-
-            // Рендер домов
-            const houseList = document.getElementById('housesList');
-            houseList.innerHTML = '';
-            for (let h of houses) {
-                const div = document.createElement('div');
-                div.className = 'item-box';
-                div.innerHTML = `<span>Дом ${h.house}</span><span>Куспид: ${h.cusp.toFixed(2)}°</span>`;
-                houseList.appendChild(div);
-            }
-
-            // Прогноз — вывод простой выборки
-            const forecastText = document.getElementById('forecastText');
-            const trendsText = document.getElementById('trendsText');
-            forecastText.textContent = 'Прогноз пока не реализован. В будущем будет включать анализ транзитов и аспектов.';
-            trendsText.textContent = 'Астрологические тенденции основываются на движении планет и аспектах.';
-
-            // Построение диаграмм с Chart.js
-            buildPolarChart('natalChart', natalPlanets);
-            buildPolarChart('transitChart', transitPlanets);
-
-            loading.style.display = 'none';
+            
+            const natalPositions = calculatePlanetPositions(date, time, lat, lon);
+            drawChart(natalPositions);
+            
+            const currentTransits = calculateTransits();
+            generatePrediction(natalPositions, currentTransits);
         }
-
-        // Функция построения полярной диаграммы планет
-        function buildPolarChart(canvasId, planets) {
-            const ctx = document.getElementById(canvasId).getContext('2d');
-            if (window[canvasId + 'Chart']) {
-                window[canvasId + 'Chart'].destroy();
-            }
-            const labels = planets.map(p => p.symbol);
-            const data = planets.map(p => 1); // Для равного отображения секторов
-            const colors = planets.map(p => p.color);
-
-            window[canvasId + 'Chart'] = new Chart(ctx, {
-                type: 'polarArea',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        data: data,
-                        backgroundColor: colors,
-                        borderWidth: 1,
-                        borderColor: '#222'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    scales: {
-                        r: {
-                            ticks: { display: false },
-                            grid: { color: '#444' }
-                        }
-                    },
-                    plugins: {
-                        legend: { position: 'bottom', labels: { color: '#e0e0e0', font: { size: 14 } } }
-                    }
-                }
-            });
-        }
-
-        // Инициализация событий UI после загрузки
-        document.addEventListener('DOMContentLoaded', () => {
-            initTabs();
-            initThemeSwitcher();
-            setCurrentDateDefault();
-
-            document.getElementById('calculateBtn').addEventListener('click', () => {
-                calculateHoroscope();
-            });
+        
+        // Инициализация
+        document.addEventListener('DOMContentLoaded', function() {
+            // Установка текущей даты по умолчанию
+            document.getElementById('birthDate').value = '1990-01-01';
+            document.getElementById('birthTime').value = '12:00';
+            
+            // Установка размеров canvas
+            const canvas = document.getElementById('natalChart');
+            canvas.width = canvas.offsetWidth;
+            canvas.height = 300;
+            
+            // Первоначальный расчет
+            calculateChart();
         });
+        
+        // Обновление транзитов каждую минуту
+        setInterval(calculateTransits, 60000);
     </script>
 </body>
 </html>
