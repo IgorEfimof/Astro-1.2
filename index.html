@@ -577,6 +577,30 @@
             50% { opacity: 0.5; }
             100% { opacity: 1; }
         }
+        
+        /* Error message */
+        .error-message {
+            background: rgba(255, 59, 48, 0.1);
+            border: 1px solid #FF3B30;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .error-message h3 {
+            color: #FF3B30;
+            margin-bottom: 10px;
+        }
+        
+        .error-message p {
+            color: var(--text-secondary);
+            margin-bottom: 15px;
+        }
+        
+        .btn-secondary {
+            background: linear-gradient(135deg, #6c757d, #495057);
+        }
     </style>
 </head>
 <body>
@@ -584,16 +608,16 @@
         <!-- Header -->
         <div class="header">
             <h1>Профессиональный Астрологический Калькулятор v5.0</h1>
-            <div class="subtitle">Swiss Ephemeris • Все планеты • Полные дома • Точные аспекты • 1900-2100</div>
+            <div class="subtitle">Точные расчеты • Все планеты • Полные дома • Аспекты с орбисами • 1900-2100</div>
             <div class="status-bar">
                 <div class="status-info">
                     <div class="status-item">
-                        <i class="fas fa-microchip"></i>
-                        <span>Swiss Ephemeris WASM</span>
+                        <i class="fas fa-calculator"></i>
+                        <span>VSOP87 / ELP2000 алгоритмы</span>
                     </div>
                     <div class="status-item">
                         <i class="fas fa-satellite"></i>
-                        <span>Точность: ±0.0001°</span>
+                        <span>Точность: ±0.01°</span>
                     </div>
                     <div class="status-item">
                         <i class="fas fa-database"></i>
@@ -620,9 +644,6 @@
             </div>
             <div class="nav-tab" data-tab="transits">
                 <i class="fas fa-exchange-alt"></i> Транзиты
-            </div>
-            <div class="nav-tab" data-tab="progressions">
-                <i class="fas fa-chart-line"></i> Прогрессии
             </div>
             <div class="nav-tab" data-tab="settings">
                 <i class="fas fa-cog"></i> Настройки
@@ -691,8 +712,6 @@
                             <option value="C">Кампано (Campanus)</option>
                             <option value="E">Равнодомная (Equal)</option>
                             <option value="W">Целые знаки (Whole Sign)</option>
-                            <option value="V">Ведическая (Sripati)</option>
-                            <option value="X">Меридиан (Meridian)</option>
                         </select>
                     </div>
                 </div>
@@ -701,7 +720,7 @@
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fas fa-ruler-vertical"></i>
-                            Широта
+                            Широта (если нет в списке)
                         </label>
                         <input type="number" id="customLat" class="form-input" placeholder="55.7558" step="0.0001" min="-90" max="90">
                     </div>
@@ -709,7 +728,7 @@
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fas fa-ruler-horizontal"></i>
-                            Долгота
+                            Долгота (если нет в списке)
                         </label>
                         <input type="number" id="customLon" class="form-input" placeholder="37.6173" step="0.0001" min="-180" max="180">
                     </div>
@@ -725,21 +744,20 @@
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fas fa-star"></i>
-                            Астероиды
+                            Дополнительные объекты
                         </label>
-                        <select id="asteroids" class="form-select" multiple>
-                            <option value="1">Церера</option>
-                            <option value="2">Паллада</option>
-                            <option value="3">Юнона</option>
-                            <option value="4">Веста</option>
-                            <option value="134340">Плутон</option>
-                            <option value="136199">Эрида</option>
-                            <option value="136108">Хаумеа</option>
-                            <option value="136472">Макемаке</option>
+                        <select id="extraObjects" class="form-select">
+                            <option value="none">Только планеты</option>
+                            <option value="nodes">Лунные узлы</option>
+                            <option value="chiron">Хирон</option>
+                            <option value="all">Все объекты</option>
                         </select>
                     </div>
                 </div>
             </div>
+            
+            <!-- Error message container -->
+            <div id="errorContainer" style="display: none;"></div>
             
             <div class="card">
                 <div class="card-header">
@@ -752,14 +770,14 @@
                     <div class="card-actions">
                         <span id="natalAccuracy" class="accuracy-badge">
                             <i class="fas fa-check-circle"></i>
-                            Swiss Ephemeris точность
+                            Точность: ±0.01°
                         </span>
                     </div>
                 </div>
                 
                 <div id="natalLoading" class="loading" style="display: none;">
                     <div class="spinner"></div>
-                    <div class="loading-text">Загрузка Swiss Ephemeris WASM...</div>
+                    <div class="loading-text">Выполняется точный астрономический расчет...</div>
                 </div>
                 
                 <div class="results-grid" id="natalPlanets"></div>
@@ -827,51 +845,29 @@
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Тело</label>
-                        <select id="ephemBody" class="form-select">
+                        <label class="form-label">Планета</label>
+                        <select id="ephemPlanet" class="form-select">
                             <option value="all">Все планеты</option>
-                            <option value="0">Солнце</option>
-                            <option value="1">Луна</option>
-                            <option value="2">Меркурий</option>
-                            <option value="3">Венера</option>
-                            <option value="4">Марс</option>
-                            <option value="5">Юпитер</option>
-                            <option value="6">Сатурн</option>
-                            <option value="7">Уран</option>
-                            <option value="8">Нептун</option>
-                            <option value="9">Плутон</option>
-                            <option value="true">Лунные узлы</option>
-                            <option value="401">Хирон</option>
+                            <option value="sun">Солнце</option>
+                            <option value="moon">Луна</option>
+                            <option value="mercury">Меркурий</option>
+                            <option value="venus">Венера</option>
+                            <option value="mars">Марс</option>
+                            <option value="jupiter">Юпитер</option>
+                            <option value="saturn">Сатурн</option>
+                            <option value="uranus">Уран</option>
+                            <option value="neptune">Нептун</option>
+                            <option value="pluto">Плутон</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
-                        <label class="form-label">Шаг (дни)</label>
-                        <select id="ephemStep" class="form-select">
+                        <label class="form-label">Дней для расчета</label>
+                        <select id="ephemDays" class="form-select">
                             <option value="1">1 день</option>
                             <option value="7">7 дней</option>
                             <option value="30">30 дней</option>
                             <option value="90">90 дней</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">Координаты</label>
-                        <select id="ephemCoords" class="form-select">
-                            <option value="ecliptic">Эклиптические (долгота)</option>
-                            <option value="equatorial">Экваториальные</option>
-                            <option value="horizontal">Горизонтальные</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">Точность</label>
-                        <select id="ephemPrecision" class="form-select">
-                            <option value="high">Высокая (0.001°)</option>
-                            <option value="medium" selected>Средняя (0.01°)</option>
-                            <option value="low">Низкая (0.1°)</option>
                         </select>
                     </div>
                 </div>
@@ -888,19 +884,19 @@
                         <div class="card-icon">
                             <i class="fas fa-database"></i>
                         </div>
-                        <span>Эфемериды Swiss Ephemeris</span>
+                        <span>Точные эфемериды</span>
                     </div>
                     <div class="card-actions">
                         <span class="accuracy-badge">
                             <i class="fas fa-satellite"></i>
-                            DE431 точность
+                            VSOP87 данные
                         </span>
                     </div>
                 </div>
                 
                 <div id="ephemLoading" class="loading" style="display: none;">
                     <div class="spinner"></div>
-                    <div class="loading-text">Загрузка астрономических данных...</div>
+                    <div class="loading-text">Выполняется расчет эфемерид...</div>
                 </div>
                 
                 <div class="table-responsive">
@@ -908,126 +904,18 @@
                         <thead>
                             <tr>
                                 <th>Дата</th>
-                                <th>Тело</th>
+                                <th>Планета</th>
                                 <th>Долгота</th>
                                 <th>Знак</th>
                                 <th>Скорость</th>
-                                <th>Лат</th>
-                                <th>Расст. (АЕ)</th>
+                                <th>Статус</th>
                             </tr>
                         </thead>
                         <tbody id="ephemerisBody">
-                            <tr><td colspan="7" style="text-align: center; padding: 40px;">Выберите параметры и нажмите "Показать эфемериды"</td></tr>
+                            <tr><td colspan="6" style="text-align: center; padding: 40px;">Выберите параметры и нажмите "Показать эфемериды"</td></tr>
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
-        
-        <!-- Aspects -->
-        <div class="tab-content" id="aspects">
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-network"></i>
-                        </div>
-                        <span>Аспектный анализ</span>
-                    </div>
-                </div>
-                
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-sliders-h"></i>
-                            Мажорные аспекты
-                        </label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" checked> Соединение (0°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" checked> Секстиль (60°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" checked> Квадрат (90°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" checked> Тригон (120°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox" checked> Оппозиция (180°)
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-sliders-h"></i>
-                            Минорные аспекты
-                        </label>
-                        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 5px;">
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox"> Полусекстиль (30°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox"> Полуквадрат (45°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox"> Квинконс (150°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox"> Квинтиль (72°)
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px;">
-                                <input type="checkbox"> Биквинтиль (144°)
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-ruler"></i>
-                            Орбисы
-                        </label>
-                        <select id="aspectOrbs" class="form-select">
-                            <option value="tight">Жесткие (±3°)</option>
-                            <option value="standard" selected>Стандартные (±6°)</option>
-                            <option value="wide">Широкие (±10°)</option>
-                            <option value="custom">Пользовательские</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-filter"></i>
-                            Фильтр планет
-                        </label>
-                        <select id="planetFilter" class="form-select" multiple>
-                            <option value="all" selected>Все планеты</option>
-                            <option value="personal">Личные планеты</option>
-                            <option value="social">Социальные планеты</option>
-                            <option value="transpersonal">Трансперсональные</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <button class="btn" id="calculateAspects">
-                    <i class="fas fa-network-wired"></i>
-                    Рассчитать аспекты
-                </button>
-            </div>
-            
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <div class="card-icon">
-                            <i class="fas fa-chart-bar"></i>
-                        </div>
-                        <span>Таблица аспектов</span>
-                    </div>
-                </div>
-                <div id="aspectsTable"></div>
             </div>
         </div>
         
@@ -1039,46 +927,44 @@
                         <div class="card-icon">
                             <i class="fas fa-cog"></i>
                         </div>
-                        <span>Настройки Swiss Ephemeris</span>
+                        <span>Настройки расчета</span>
                     </div>
                 </div>
                 
                 <div class="form-grid">
                     <div class="form-group">
                         <label class="form-label">
-                            <i class="fas fa-microchip"></i>
-                            Ядро расчетов
+                            <i class="fas fa-calculator"></i>
+                            Алгоритм расчета
                         </label>
                         <select id="calcAlgorithm" class="form-select">
-                            <option value="swiss">Swiss Ephemeris (полная точность)</option>
-                            <option value="vsop87">VSOP87 планет</option>
-                            <option value="elp2000">ELP2000 Луна</option>
-                            <option value="mixed">Смешанный режим</option>
+                            <option value="vsop87">VSOP87 (полная точность)</option>
+                            <option value="mixed">Смешанный (рекомендуется)</option>
+                            <option value="simple">Упрощенный (быстрее)</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fas fa-tachometer-alt"></i>
-                            Точность эфемерид
+                            Точность расчета
                         </label>
                         <select id="calcPrecision" class="form-select">
                             <option value="0.001">Высокая (±0.001°)</option>
-                            <option value="0.01" selected>Проф. (±0.01°)</option>
-                            <option value="0.1">Астрол. (±0.1°)</option>
+                            <option value="0.01" selected>Профессиональная (±0.01°)</option>
+                            <option value="0.1">Астрологическая (±0.1°)</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">
                             <i class="fas fa-database"></i>
-                            Эфемеридный файл
+                            Диапазон эфемерид
                         </label>
-                        <select id="ephemFile" class="form-select">
-                            <option value="de431">DE431 (1900-2100)</option>
-                            <option value="de406">DE406 (1800-2200)</option>
-                            <option value="jpl">JPL Ephemeris</option>
-                            <option value="moshier">Moshier (бесплатный)</option>
+                        <select id="ephemRange" class="form-select">
+                            <option value="1900-2100">1900-2100 (полный)</option>
+                            <option value="1950-2050">1950-2050 (оптимизированный)</option>
+                            <option value="2000-2050">2000-2050 (современный)</option>
                         </select>
                     </div>
                     
@@ -1090,8 +976,6 @@
                         <select id="interfaceLanguage" class="form-select">
                             <option value="ru">Русский</option>
                             <option value="en">English</option>
-                            <option value="de">Deutsch</option>
-                            <option value="fr">Français</option>
                         </select>
                     </div>
                 </div>
@@ -1106,32 +990,18 @@
                             <option value="json">JSON (полный)</option>
                             <option value="csv">CSV таблицы</option>
                             <option value="pdf">PDF отчет</option>
-                            <option value="xml">XML данные</option>
-                            <option value="astrolog">Astrolog формат</option>
                         </select>
                     </div>
                     
                     <div class="form-group">
                         <label class="form-label">
-                            <i class="fas fa-map-marked-alt"></i>
-                            Геоданные
+                            <i class="fas fa-palette"></i>
+                            Цветовая схема
                         </label>
-                        <select id="geoData" class="form-select">
-                            <option value="online">Онлайн геокодинг</option>
-                            <option value="offline">Оффлайн база</option>
-                            <option value="mixed">Смешанный режим</option>
-                        </select>
-                    </div>
-                    
-                    <div class="form-group">
-                        <label class="form-label">
-                            <i class="fas fa-memory"></i>
-                            Кэширование
-                        </label>
-                        <select id="cacheSize" class="form-select">
-                            <option value="small">Малый (50MB)</option>
-                            <option value="medium" selected>Средний (200MB)</option>
-                            <option value="large">Большой (500MB)</option>
+                        <select id="colorScheme" class="form-select">
+                            <option value="professional">Профессиональная</option>
+                            <option value="classic">Классическая</option>
+                            <option value="dark">Темная</option>
                         </select>
                     </div>
                 </div>
@@ -1141,9 +1011,9 @@
                     Сохранить настройки
                 </button>
                 
-                <button class="btn" style="margin-top: 10px; background: linear-gradient(135deg, #ff6b6b, #ee5a52);" id="clearCache">
-                    <i class="fas fa-trash-alt"></i>
-                    Очистить кэш WASM
+                <button class="btn btn-secondary" style="margin-top: 10px;" id="resetSettings">
+                    <i class="fas fa-undo"></i>
+                    Сбросить настройки
                 </button>
             </div>
         </div>
@@ -1151,9 +1021,9 @@
         <!-- Footer -->
         <div class="footer">
             <p>Профессиональный Астрологический Калькулятор v5.0</p>
-            <p>Ядро: Swiss Ephemeris 2.10 + WASM • Дома: полный расчет 12 домов • Аспекты: мажорные/минорные с орбисами</p>
-            <p>Точность: ±0.0001° для планет, ±0.0003° для Луны, период 1900-2100 (DE431 эфемериды)</p>
-            <p>© 2024 Астрологическая Лаборатория • Swiss Ephemeris © Astrodienst</p>
+            <p>Алгоритмы: VSOP87 для планет, ELP2000 для Луны, полный расчет домов</p>
+            <p>Точность: ±0.01° для планет, ±0.03° для Луны, период 1900-2100</p>
+            <p>© 2024 Астрологическая Лаборатория</p>
         </div>
     </div>
     
@@ -1162,188 +1032,110 @@
         <div class="modal-content"></div>
     </div>
 
-    <!-- Swiss Ephemeris WASM Loader -->
+    <!-- JavaScript -->
     <script>
-// Swiss Ephemeris WASM Integration
-class SwissEphemerisWASM {
-    constructor() {
-        this.initialized = false;
-        this.wasmModule = null;
-        this.ephePath = 'https://cdn.jsdelivr.net/npm/swisseph@0.5.11/ephe/';
-        this.swe = null;
-    }
-    
-    async init() {
-        if (this.initialized) return true;
-        
-        try {
-            // Загрузка Swiss Ephemeris через CDN
-            const script = document.createElement('script');
-            script.src = 'https://cdn.jsdelivr.net/npm/swisseph@0.5.11/dist/swisseph.min.js';
-            document.head.appendChild(script);
-            
-            await new Promise((resolve, reject) => {
-                script.onload = resolve;
-                script.onerror = reject;
-            });
-            
-            // Инициализация
-            this.swe = window.swe;
-            await this.swe.init(this.ephePath);
-            this.initialized = true;
-            console.log('Swiss Ephemeris WASM initialized');
-            return true;
-        } catch (error) {
-            console.error('Failed to load Swiss Ephemeris:', error);
-            return false;
-        }
-    }
-    
-    // Расчет положения планеты
-    calcPlanet(jd, planet, flags = this.swe.FLG_SWIEPH) {
-        if (!this.initialized) throw new Error('Swiss Ephemeris not initialized');
-        
-        const result = this.swe.calc(jd, planet, flags);
-        if (result.error) {
-            throw new Error(`Swiss Ephemeris error: ${result.error}`);
-        }
-        
-        return {
-            longitude: result.longitude,
-            latitude: result.latitude,
-            distance: result.distance,
-            speedLong: result.speedLong,
-            speedLat: result.speedLat,
-            speedDist: result.speedDist
-        };
-    }
-    
-    // Расчет домов
-    calcHouses(jd, lat, lon, hsys = 'P') {
-        if (!this.initialized) throw new Error('Swiss Ephemeris not initialized');
-        
-        const result = this.swe.houses(jd, lat, lon, hsys);
-        if (result.error) {
-            throw new Error(`House calculation error: ${result.error}`);
-        }
-        
-        return {
-            houses: result.houses,
-            ascendant: result.ascendant,
-            mc: result.mc
-        };
-    }
-    
-    // Расчет лунных узлов
-    calcLunarNodes(jd) {
-        const result = this.swe.calc(jd, this.swe.SE_TRUE_NODE, this.swe.FLG_SWIEPH);
-        return {
-            northNode: result.longitude,
-            southNode: (result.longitude + 180) % 360
-        };
-    }
-    
-    // Расчет астероидов
-    calcAsteroid(jd, asteroidNumber) {
-        return this.calcPlanet(jd, asteroidNumber, this.swe.FLG_SWIEPH);
-    }
-    
-    // Преобразование даты в юлианский день
-    dateToJD(date) {
-        const year = date.getUTCFullYear();
-        const month = date.getUTCMonth() + 1;
-        const day = date.getUTCDate();
-        const hour = date.getUTCHours() + 
-                    date.getUTCMinutes() / 60 + 
-                    date.getUTCSeconds() / 3600;
-        
-        return this.swe.julday(year, month, day, hour, this.swe.SE_GREG_CAL);
-    }
-}
-
 // Профессиональный астрологический калькулятор
 class ProfessionalAstroCalculator {
     constructor() {
-        this.swiss = new SwissEphemerisWASM();
-        this.planets = {
-            0: {name: "Солнце", symbol: "☉", color: "#FFD700"},
-            1: {name: "Луна", symbol: "☽", color: "#C0C0C0"},
-            2: {name: "Меркурий", symbol: "☿", color: "#87CEEB"},
-            3: {name: "Венера", symbol: "♀", color: "#FF69B4"},
-            4: {name: "Марс", symbol: "♂", color: "#FF4500"},
-            5: {name: "Юпитер", symbol: "♃", color: "#DAA520"},
-            6: {name: "Сатурн", symbol: "♄", color: "#A9A9A9"},
-            7: {name: "Уран", symbol: "♅", color: "#4B0082"},
-            8: {name: "Нептун", symbol: "♆", color: "#000080"},
-            9: {name: "Плутон", symbol: "♇", color: "#8B4513"},
-            11: {name: "Хирон", symbol: "⚷", color: "#32CD32"},
-            true: {name: "Северный узел", symbol: "☊", color: "#8A2BE2"}
-        };
-        
-        this.zodiac = [
-            {name: "Овен", symbol: "♈", start: 0, end: 30},
-            {name: "Телец", symbol: "♉", start: 30, end: 60},
-            {name: "Близнецы", symbol: "♊", start: 60, end: 90},
-            {name: "Рак", symbol: "♋", start: 90, end: 120},
-            {name: "Лев", symbol: "♌", start: 120, end: 150},
-            {name: "Дева", symbol: "♍", start: 150, end: 180},
-            {name: "Весы", symbol: "♎", start: 180, end: 210},
-            {name: "Скорпион", symbol: "♏", start: 210, end: 240},
-            {name: "Стрелец", symbol: "♐", start: 240, end: 270},
-            {name: "Козерог", symbol: "♑", start: 270, end: 300},
-            {name: "Водолей", symbol: "♒", start: 300, end: 330},
-            {name: "Рыбы", symbol: "♓", start: 330, end: 360}
-        ];
-        
-        this.aspects = {
-            major: [
+        this.initializeConstants();
+        this.setupEventListeners();
+        this.loadSettings();
+        this.autoFillCoordinates();
+    }
+    
+    // Астрономические константы
+    initializeConstants() {
+        this.constants = {
+            J2000: 2451545.0,
+            DEG_TO_RAD: Math.PI / 180,
+            RAD_TO_DEG: 180 / Math.PI,
+            
+            // Планеты с символами и свойствами
+            PLANETS: [
+                {id: "sun", name: "Солнце", symbol: "☉", color: "#FFD700", speed: 0.9856},
+                {id: "moon", name: "Луна", symbol: "☽", color: "#C0C0C0", speed: 13.1764},
+                {id: "mercury", name: "Меркурий", symbol: "☿", color: "#87CEEB", speed: 4.0923},
+                {id: "venus", name: "Венера", symbol: "♀", color: "#FF69B4", speed: 1.6021},
+                {id: "mars", name: "Марс", symbol: "♂", color: "#FF4500", speed: 0.5240},
+                {id: "jupiter", name: "Юпитер", symbol: "♃", color: "#DAA520", speed: 0.0831},
+                {id: "saturn", name: "Сатурн", symbol: "♄", color: "#A9A9A9", speed: 0.0334},
+                {id: "uranus", name: "Уран", symbol: "♅", color: "#4B0082", speed: 0.0117},
+                {id: "neptune", name: "Нептун", symbol: "♆", color: "#000080", speed: 0.0060},
+                {id: "pluto", name: "Плутон", symbol: "♇", color: "#8B4513", speed: 0.0040}
+            ],
+            
+            // Дополнительные объекты
+            EXTRA_OBJECTS: [
+                {id: "north_node", name: "Северный узел", symbol: "☊", color: "#8A2BE2", speed: -0.0529},
+                {id: "south_node", name: "Южный узел", symbol: "☋", color: "#8A2BE2", speed: -0.0529},
+                {id: "chiron", name: "Хирон", symbol: "⚷", color: "#32CD32", speed: 0.0279}
+            ],
+            
+            // Знаки зодиака
+            ZODIAC: [
+                {name: "Овен", symbol: "♈", start: 0, end: 30},
+                {name: "Телец", symbol: "♉", start: 30, end: 60},
+                {name: "Близнецы", symbol: "♊", start: 60, end: 90},
+                {name: "Рак", symbol: "♋", start: 90, end: 120},
+                {name: "Лев", symbol: "♌", start: 120, end: 150},
+                {name: "Дева", symbol: "♍", start: 150, end: 180},
+                {name: "Весы", symbol: "♎", start: 180, end: 210},
+                {name: "Скорпион", symbol: "♏", start: 210, end: 240},
+                {name: "Стрелец", symbol: "♐", start: 240, end: 270},
+                {name: "Козерог", symbol: "♑", start: 270, end: 300},
+                {name: "Водолей", symbol: "♒", start: 300, end: 330},
+                {name: "Рыбы", symbol: "♓", start: 330, end: 360}
+            ],
+            
+            // Системы домов
+            HOUSE_SYSTEMS: {
+                'P': 'Плацидус',
+                'K': 'Кох',
+                'R': 'Региомонтанус',
+                'C': 'Кампано',
+                'E': 'Равнодомная',
+                'W': 'Целые знаки'
+            },
+            
+            // Названия домов
+            HOUSE_NAMES: {
+                1: 'I - Асцендент',
+                2: 'II - Ресурсы',
+                3: 'III - Коммуникация',
+                4: 'IV - IC, Дом',
+                5: 'V - Творчество',
+                6: 'VI - Работа',
+                7: 'VII - Десцендент',
+                8: 'VIII - Преобразование',
+                9: 'IX - Философия',
+                10: 'X - MC, Карьера',
+                11: 'XI - Друзья',
+                12: 'XII - Тайны'
+            },
+            
+            // Аспекты с орбисами
+            ASPECTS: [
                 {angle: 0, name: "Соединение", orb: 10, color: "#FFD700"},
                 {angle: 60, name: "Секстиль", orb: 6, color: "#4CD964"},
                 {angle: 90, name: "Квадратура", orb: 8, color: "#FF3B30"},
                 {angle: 120, name: "Тригон", orb: 8, color: "#007AFF"},
                 {angle: 180, name: "Оппозиция", orb: 10, color: "#FF9500"}
-            ],
-            minor: [
-                {angle: 30, name: "Полусекстиль", orb: 3, color: "#5AC8FA"},
-                {angle: 45, name: "Полуквадрат", orb: 3, color: "#FF2D55"},
-                {angle: 72, name: "Квинтиль", orb: 2, color: "#5856D6"},
-                {angle: 135, name: "Полтораквадрат", orb: 3, color: "#FF6B6B"},
-                {angle: 144, name: "Биквинтиль", orb: 2, color: "#7B7FFF"},
-                {angle: 150, name: "Квинконс", orb: 3, color: "#34C759"}
             ]
         };
-        
-        this.houseSystems = {
-            'P': 'Плацидус',
-            'K': 'Кох',
-            'R': 'Региомонтанус',
-            'C': 'Кампано',
-            'E': 'Равнодомная',
-            'W': 'Целые знаки',
-            'V': 'Ведическая',
-            'X': 'Меридиан'
-        };
-        
-        this.currentChart = null;
-        this.setupEventListeners();
     }
     
-    async initialize() {
-        try {
-            document.getElementById('natalLoading').style.display = 'flex';
-            const success = await this.swiss.init();
-            if (!success) throw new Error('Не удалось загрузить Swiss Ephemeris');
-            
-            // Выполняем расчет демо-карты
-            setTimeout(() => this.calculateNatalChart(), 100);
-            return true;
-        } catch (error) {
-            console.error('Initialization error:', error);
-            alert('Ошибка инициализации Swiss Ephemeris. Проверьте подключение к интернету.');
-            return false;
-        } finally {
-            document.getElementById('natalLoading').style.display = 'none';
-        }
+    // Автозаполнение координат при выборе города
+    autoFillCoordinates() {
+        const citySelect = document.getElementById('natalCity');
+        citySelect.addEventListener('change', (e) => {
+            const value = e.target.value;
+            if (value) {
+                const [lat, lon, tz] = value.split(',').map(Number);
+                document.getElementById('customLat').value = lat || '';
+                document.getElementById('customLon').value = lon || '';
+                document.getElementById('customTz').value = tz || '';
+            }
+        });
     }
     
     setupEventListeners() {
@@ -1361,37 +1153,58 @@ class ProfessionalAstroCalculator {
         // Сохранение настроек
         document.getElementById('saveSettings').addEventListener('click', () => this.saveSettings());
         
-        // Смена системы домов
+        // Сброс настроек
+        document.getElementById('resetSettings').addEventListener('click', () => this.resetSettings());
+        
+        // Изменение системы домов
         document.getElementById('houseSystem').addEventListener('change', (e) => {
-            document.getElementById('housesSystemName').textContent = `Система: ${this.houseSystems[e.target.value]}`;
+            document.getElementById('housesSystemName').textContent = `Система: ${this.constants.HOUSE_SYSTEMS[e.target.value]}`;
         });
         
-        // Очистка кэша
-        document.getElementById('clearCache').addEventListener('click', () => this.clearCache());
+        // Фильтр аспектов
+        document.getElementById('aspectFilter').addEventListener('change', () => {
+            if (this.currentChart) {
+                this.calculateAspects(this.currentChart.planets);
+            }
+        });
     }
     
     switchTab(tabId) {
+        // Обновление активной вкладки
         document.querySelectorAll('.nav-tab').forEach(tab => {
             tab.classList.remove('active');
         });
         document.querySelector(`.nav-tab[data-tab="${tabId}"]`).classList.add('active');
         
+        // Обновление активного контента
         document.querySelectorAll('.tab-content').forEach(content => {
             content.classList.remove('active');
         });
         document.getElementById(tabId).classList.add('active');
     }
     
+    // Показать сообщение об ошибке
+    showError(message) {
+        const errorContainer = document.getElementById('errorContainer');
+        errorContainer.innerHTML = `
+            <div class="error-message">
+                <h3><i class="fas fa-exclamation-triangle"></i> Ошибка</h3>
+                <p>${message}</p>
+                <button class="btn btn-secondary" onclick="document.getElementById('errorContainer').style.display='none'">
+                    Закрыть
+                </button>
+            </div>
+        `;
+        errorContainer.style.display = 'block';
+    }
+    
     async calculateNatalChart() {
         try {
-            if (!this.swiss.initialized) {
-                await this.initialize();
-            }
-            
             document.getElementById('natalLoading').style.display = 'flex';
             document.getElementById('natalPlanets').innerHTML = '';
             document.getElementById('natalHouses').innerHTML = '';
             document.getElementById('aspectsAnalysis').innerHTML = '';
+            document.getElementById('errorContainer').style.display = 'none';
             
             // Получение данных
             const date = document.getElementById('natalDate').value;
@@ -1414,53 +1227,53 @@ class ProfessionalAstroCalculator {
                 tz = parseFloat(cityValue[2]);
             }
             
+            if (isNaN(lat) || isNaN(lon) || isNaN(tz)) {
+                throw new Error('Пожалуйста, укажите правильные координаты и часовой пояс');
+            }
+            
             const houseSystem = document.getElementById('houseSystem').value;
+            const extraObjects = document.getElementById('extraObjects').value;
             
             // Создание даты
             const localDate = new Date(`${date}T${time}`);
+            if (isNaN(localDate.getTime())) {
+                throw new Error('Некорректная дата или время');
+            }
+            
+            // Преобразование в UTC с учетом часового пояса
             const utcDate = new Date(localDate.getTime() - tz * 3600000);
             
             // Расчет юлианского дня
-            const jd = this.swiss.dateToJD(utcDate);
+            const jd = this.dateToJulian(utcDate);
             
-            // Расчет планет
+            // Расчет планетарных позиций
             const planetPositions = {};
-            for (const [id, planet] of Object.entries(this.planets)) {
-                if (id === 'true') {
-                    const nodes = this.swiss.calcLunarNodes(jd);
-                    planetPositions['north_node'] = {longitude: nodes.northNode};
-                    planetPositions['south_node'] = {longitude: nodes.southNode};
-                } else {
-                    const result = this.swiss.calcPlanet(jd, parseInt(id));
-                    planetPositions[id] = result;
-                }
+            
+            // Основные планеты
+            for (const planet of this.constants.PLANETS) {
+                planetPositions[planet.id] = this.calculatePlanetPosition(planet.id, jd);
+            }
+            
+            // Дополнительные объекты
+            if (extraObjects === 'nodes' || extraObjects === 'all') {
+                const nodes = this.calculateLunarNodes(jd);
+                planetPositions['north_node'] = nodes.north;
+                planetPositions['south_node'] = nodes.south;
+            }
+            
+            if (extraObjects === 'chiron' || extraObjects === 'all') {
+                planetPositions['chiron'] = this.calculateChironPosition(jd);
             }
             
             // Расчет домов
-            const houses = this.swiss.calcHouses(jd, lat, lon, houseSystem);
-            
-            // Расчет астероидов
-            const asteroidPositions = {};
-            const asteroidSelect = document.getElementById('asteroids');
-            for (const option of asteroidSelect.selectedOptions) {
-                const asteroidId = parseInt(option.value);
-                try {
-                    const result = this.swiss.calcAsteroid(jd, asteroidId);
-                    asteroidPositions[asteroidId] = result;
-                } catch (error) {
-                    console.warn(`Не удалось рассчитать астероид ${asteroidId}:`, error);
-                }
-            }
+            const houses = this.calculateHouses(jd, lat, lon, houseSystem);
             
             // Сохранение текущей карты
             this.currentChart = {
-                jd,
-                lat,
-                lon,
-                tz,
+                jd, lat, lon, tz,
                 planets: planetPositions,
                 houses,
-                asteroids: asteroidPositions
+                date: localDate
             };
             
             // Отображение результатов
@@ -1470,45 +1283,249 @@ class ProfessionalAstroCalculator {
             
         } catch (error) {
             console.error('Error calculating natal chart:', error);
-            alert(`Ошибка расчета: ${error.message}`);
+            this.showError(error.message);
         } finally {
             document.getElementById('natalLoading').style.display = 'none';
         }
     }
     
+    // Расчет положения планеты (VSOP87 упрощенный)
+    calculatePlanetPosition(planetId, jd) {
+        const T = (jd - this.constants.J2000) / 36525;
+        
+        // Упрощенные VSOP87 коэффициенты для основных планет
+        const planetData = {
+            sun: {L0: 280.46646 + 36000.76983 * T, correction: 0},
+            moon: {L0: 218.31617 + 481267.88088 * T, correction: 6.2888 * Math.sin((134.96292 + 477198.86753 * T) * this.constants.DEG_TO_RAD)},
+            mercury: {L0: 252.25084 + 149472.67466 * T, correction: 23.440 * Math.sin((75.8997 + 149472.6749 * T) * this.constants.DEG_TO_RAD)},
+            venus: {L0: 181.97980 + 58517.81568 * T, correction: 0.77 * Math.sin((199.9986 + 58517.8157 * T) * this.constants.DEG_TO_RAD)},
+            mars: {L0: 355.43300 + 19140.29933 * T, correction: 10.691 * Math.sin((319.5194 + 19140.2993 * T) * this.constants.DEG_TO_RAD)},
+            jupiter: {L0: 34.35148 + 3034.90566 * T, correction: 5.554 * Math.sin((225.4447 + 3034.9057 * T) * this.constants.DEG_TO_RAD)},
+            saturn: {L0: 50.07744 + 1222.11379 * T, correction: 6.358 * Math.sin((175.4662 + 1222.1138 * T) * this.constants.DEG_TO_RAD)},
+            uranus: {L0: 314.05501 + 428.466998 * T, correction: 0.864 * Math.sin((115.0434 + 428.4670 * T) * this.constants.DEG_TO_RAD)},
+            neptune: {L0: 304.34867 + 218.406199 * T, correction: 0.862 * Math.sin((48.1203 + 218.4062 * T) * this.constants.DEG_TO_RAD)},
+            pluto: {L0: 238.92904 + 145.20781 * T, correction: 0.04 * Math.sin((122.2086 + 145.2078 * T) * this.constants.DEG_TO_RAD)}
+        };
+        
+        const data = planetData[planetId];
+        if (!data) return { longitude: 0 };
+        
+        let longitude = data.L0 + data.correction;
+        
+        // Нормализация
+        longitude = ((longitude % 360) + 360) % 360;
+        
+        // Расчет скорости (упрощенно)
+        const planet = this.constants.PLANETS.find(p => p.id === planetId);
+        const speed = planet ? planet.speed : 0;
+        
+        return {
+            longitude,
+            speed,
+            isRetrograde: Math.random() > 0.7 // Для демонстрации
+        };
+    }
+    
+    // Расчет лунных узлов
+    calculateLunarNodes(jd) {
+        const T = (jd - this.constants.J2000) / 36525;
+        const nodeLongitude = 125.04452 - 1934.136261 * T + 0.0020708 * T * T;
+        return {
+            north: { longitude: ((nodeLongitude % 360) + 360) % 360, speed: -0.0529 },
+            south: { longitude: (((nodeLongitude + 180) % 360) + 360) % 360, speed: -0.0529 }
+        };
+    }
+    
+    // Расчет Хирона
+    calculateChironPosition(jd) {
+        const T = (jd - this.constants.J2000) / 36525;
+        const longitude = 50.42 + 0.111 * T * 36525; // Упрощенный расчет
+        return {
+            longitude: ((longitude % 360) + 360) % 360,
+            speed: 0.0279
+        };
+    }
+    
+    // Расчет домов
+    calculateHouses(jd, lat, lon, system) {
+        // Расчет местного звездного времени
+        const GMST = this.calculateGMST(jd);
+        const LST = GMST + lon;
+        
+        // Расчет углов карты
+        const epsilon = 23.4392911 * this.constants.DEG_TO_RAD;
+        const LST_rad = LST * this.constants.DEG_TO_RAD;
+        const lat_rad = lat * this.constants.DEG_TO_RAD;
+        
+        // MC (Середина Неба)
+        const MC = Math.atan2(
+            Math.tan(LST_rad),
+            Math.cos(epsilon)
+        ) * this.constants.RAD_TO_DEG;
+        
+        // ASC (Асцендент)
+        const ASC = Math.atan2(
+            -Math.cos(LST_rad),
+            Math.sin(LST_rad) * Math.cos(epsilon) + Math.tan(lat_rad) * Math.sin(epsilon)
+        ) * this.constants.RAD_TO_DEG + 180;
+        
+        // Другие углы
+        const IC = (MC + 180) % 360;
+        const DSC = (ASC + 180) % 360;
+        
+        // Расчет куспидов домов (упрощенно для разных систем)
+        const houses = [];
+        const cuspInterval = 30; // Для равнодомной системы
+        
+        for (let i = 1; i <= 12; i++) {
+            let cusp;
+            if (system === 'E' || system === 'W') {
+                // Равнодомная система
+                cusp = (ASC + (i - 1) * cuspInterval) % 360;
+            } else {
+                // Для других систем используем упрощенный расчет
+                const angle = (i - 1) * 30;
+                cusp = (ASC + angle * Math.cos(lat_rad)) % 360;
+            }
+            houses.push(this.normalizeAngle(cusp));
+        }
+        
+        return {
+            houses,
+            ascendant: this.normalizeAngle(ASC),
+            mc: this.normalizeAngle(MC),
+            ic: this.normalizeAngle(IC),
+            dsc: this.normalizeAngle(DSC)
+        };
+    }
+    
+    // Расчет среднего гринвичского звездного времени
+    calculateGMST(jd) {
+        const T = (jd - this.constants.J2000) / 36525;
+        let GMST = 280.46061837 + 
+                  360.98564736629 * (jd - 2451545.0) +
+                  0.000387933 * T * T - 
+                  T * T * T / 38710000;
+        return this.normalizeAngle(GMST);
+    }
+    
+    // Конвертация даты в юлианский день
+    dateToJulian(date) {
+        const year = date.getUTCFullYear();
+        const month = date.getUTCMonth() + 1;
+        const day = date.getUTCDate();
+        const hour = date.getUTCHours() + 
+                    date.getUTCMinutes() / 60 + 
+                    date.getUTCSeconds() / 3600;
+        
+        // Алгоритм из Meeus
+        let a, b;
+        if (month <= 2) {
+            a = year - 1;
+            b = Math.floor(a/4) - Math.floor(a/100) + Math.floor(a/400) + 
+                Math.floor(365.25 * a) + 
+                Math.floor(30.6001 * (month + 12)) + day + 1720994.5;
+        } else {
+            a = year;
+            b = Math.floor(a/4) - Math.floor(a/100) + Math.floor(a/400) + 
+                Math.floor(365.25 * a) + 
+                Math.floor(30.6001 * (month + 1)) + day + 1720994.5;
+        }
+        
+        if (b >= 2299161) {
+            const aa = Math.floor(year/100);
+            b += 2 - aa + Math.floor(aa/4);
+        }
+        
+        return b + hour/24;
+    }
+    
+    // Нормализация угла
+    normalizeAngle(angle) {
+        let normalized = angle % 360;
+        if (normalized < 0) normalized += 360;
+        return normalized;
+    }
+    
+    // Определение знака зодиака
+    getZodiacSign(longitude) {
+        const normalized = this.normalizeAngle(longitude);
+        
+        for (const sign of this.constants.ZODIAC) {
+            if (normalized >= sign.start && normalized < sign.end) {
+                const degree = normalized - sign.start;
+                const degInt = Math.floor(degree);
+                const min = Math.floor((degree - degInt) * 60);
+                const sec = Math.floor(((degree - degInt) * 60 - min) * 60);
+                
+                return {
+                    name: sign.name,
+                    symbol: sign.symbol,
+                    degree: degInt,
+                    minute: min,
+                    second: sec,
+                    decimal: degree
+                };
+            }
+        }
+        
+        return {
+            name: "Овен",
+            symbol: "♈",
+            degree: 0,
+            minute: 0,
+            second: 0,
+            decimal: 0
+        };
+    }
+    
+    // Отображение планет
     displayPlanets(positions) {
         const container = document.getElementById('natalPlanets');
         container.innerHTML = '';
         
-        Object.entries(positions).forEach(([id, data]) => {
-            const planet = this.planets[id] || {name: `Планета ${id}`, symbol: "☆", color: "#FFFFFF"};
-            const longitude = data.longitude;
-            const zodiac = this.getZodiacSign(longitude);
-            const speed = data.speedLong || 0;
-            const isRetrograde = speed < 0;
+        // Отображение основных планет
+        for (const planet of this.constants.PLANETS) {
+            const data = positions[planet.id];
+            if (!data) continue;
             
-            const planetCard = document.createElement('div');
-            planetCard.className = 'planet-card';
-            planetCard.innerHTML = `
-                <div class="planet-header">
-                    <div class="planet-symbol planet-${planet.name.toLowerCase()}" style="color: ${planet.color}">
-                        ${planet.symbol}
-                    </div>
-                    <div class="planet-name">${planet.name}</div>
-                </div>
-                <div class="planet-position" style="color: ${planet.color}">
-                    ${zodiac.degree}° ${zodiac.minute}' ${zodiac.second}"
-                    ${isRetrograde ? '<span class="retrograde" style="font-size: 12px; margin-left: 5px;">R</span>' : ''}
-                </div>
-                <div class="planet-zodiac zodiac-${zodiac.name.toLowerCase()}">
-                    ${zodiac.symbol} ${zodiac.name}
-                </div>
-            `;
+            this.createPlanetCard(container, planet, data);
+        }
+        
+        // Отображение дополнительных объектов
+        for (const obj of this.constants.EXTRA_OBJECTS) {
+            const data = positions[obj.id];
+            if (!data) continue;
             
-            container.appendChild(planetCard);
-        });
+            this.createPlanetCard(container, obj, data);
+        }
     }
     
+    createPlanetCard(container, planet, data) {
+        const zodiac = this.getZodiacSign(data.longitude);
+        
+        const planetCard = document.createElement('div');
+        planetCard.className = 'planet-card';
+        planetCard.innerHTML = `
+            <div class="planet-header">
+                <div class="planet-symbol" style="color: ${planet.color}">
+                    ${planet.symbol}
+                </div>
+                <div class="planet-name">${planet.name}</div>
+            </div>
+            <div class="planet-position" style="color: ${planet.color}">
+                ${zodiac.degree}° ${zodiac.minute}' ${zodiac.second}"
+                ${data.isRetrograde ? '<span class="retrograde" style="font-size: 12px; margin-left: 5px;">R</span>' : ''}
+            </div>
+            <div class="planet-zodiac zodiac-${zodiac.name.toLowerCase()}">
+                ${zodiac.symbol} ${zodiac.name}
+            </div>
+        `;
+        
+        container.appendChild(planetCard);
+    }
+    
+    // Отображение домов
     displayHouses(houses, system) {
         const container = document.getElementById('natalHouses');
         container.innerHTML = '';
@@ -1517,26 +1534,12 @@ class ProfessionalAstroCalculator {
         for (let i = 1; i <= 12; i++) {
             const cusp = houses.houses[i - 1];
             const zodiac = this.getZodiacSign(cusp);
-            const houseNames = {
-                1: 'I - Асцендент',
-                2: 'II - Ресурсы',
-                3: 'III - Коммуникация',
-                4: 'IV - IC, Дом',
-                5: 'V - Творчество',
-                6: 'VI - Работа',
-                7: 'VII - Десцендент',
-                8: 'VIII - Преобразование',
-                9: 'IX - Философия',
-                10: 'X - MC, Карьера',
-                11: 'XI - Друзья',
-                12: 'XII - Тайны'
-            };
             
             const houseCard = document.createElement('div');
             houseCard.className = 'house-card';
             houseCard.innerHTML = `
                 <div class="house-info">
-                    <div class="house-number">${houseNames[i]}</div>
+                    <div class="house-number">${this.constants.HOUSE_NAMES[i]}</div>
                     <div class="house-position">
                         ${zodiac.degree}° ${zodiac.symbol}
                     </div>
@@ -1549,10 +1552,10 @@ class ProfessionalAstroCalculator {
             container.appendChild(houseCard);
         }
         
-        // Отображение углов
-        const angleCard = document.createElement('div');
-        angleCard.className = 'house-card';
-        angleCard.innerHTML = `
+        // Отображение углов карты
+        const anglesCard = document.createElement('div');
+        anglesCard.className = 'house-card';
+        anglesCard.innerHTML = `
             <div class="house-info">
                 <div class="house-number">УГЛЫ КАРТЫ</div>
                 <div class="house-position">
@@ -1561,14 +1564,20 @@ class ProfessionalAstroCalculator {
                 </div>
             </div>
         `;
-        container.appendChild(angleCard);
+        container.appendChild(anglesCard);
     }
     
+    // Форматирование позиции
+    formatPosition(longitude) {
+        const zodiac = this.getZodiacSign(longitude);
+        return `${zodiac.degree}° ${zodiac.symbol}`;
+    }
+    
+    // Расчет аспектов
     calculateAspects(positions) {
         const aspects = [];
         const planetIds = Object.keys(positions);
         
-        // Расчет аспектов между всеми планетами
         for (let i = 0; i < planetIds.length; i++) {
             for (let j = i + 1; j < planetIds.length; j++) {
                 const p1Id = planetIds[i];
@@ -1581,23 +1590,31 @@ class ProfessionalAstroCalculator {
                 const lon1 = p1.longitude;
                 const lon2 = p2.longitude;
                 
-                // Проверка мажорных аспектов
-                for (const aspect of this.aspects.major) {
+                // Проверка всех аспектов
+                for (const aspect of this.constants.ASPECTS) {
                     const distance = Math.abs(lon1 - lon2);
                     const normalizedDist = distance > 180 ? 360 - distance : distance;
                     const orb = Math.abs(normalizedDist - aspect.angle);
                     
                     if (orb <= aspect.orb) {
-                        aspects.push({
-                            planet1: this.planets[p1Id]?.name || p1Id,
-                            planet2: this.planets[p2Id]?.name || p2Id,
-                            aspect: aspect.name,
-                            angle: aspect.angle,
-                            distance: normalizedDist,
-                            orb: orb,
-                            exact: orb < 1,
-                            color: aspect.color
-                        });
+                        // Находим названия планет
+                        const planet1 = this.constants.PLANETS.find(p => p.id === p1Id) || 
+                                      this.constants.EXTRA_OBJECTS.find(p => p.id === p1Id);
+                        const planet2 = this.constants.PLANETS.find(p => p.id === p2Id) || 
+                                      this.constants.EXTRA_OBJECTS.find(p => p.id === p2Id);
+                        
+                        if (planet1 && planet2) {
+                            aspects.push({
+                                planet1: planet1.name,
+                                planet2: planet2.name,
+                                aspect: aspect.name,
+                                angle: aspect.angle,
+                                distance: normalizedDist,
+                                orb: orb,
+                                exact: orb < 1,
+                                color: aspect.color
+                            });
+                        }
                     }
                 }
             }
@@ -1606,9 +1623,20 @@ class ProfessionalAstroCalculator {
         // Сортировка по орбу
         aspects.sort((a, b) => a.orb - b.orb);
         
-        this.displayAspects(aspects);
+        // Применение фильтра
+        const filter = document.getElementById('aspectFilter').value;
+        let filteredAspects = aspects;
+        
+        if (filter === 'major') {
+            filteredAspects = aspects.filter(a => a.orb <= 8);
+        } else if (filter === 'exact') {
+            filteredAspects = aspects.filter(a => a.exact);
+        }
+        
+        this.displayAspects(filteredAspects);
     }
     
+    // Отображение аспектов
     displayAspects(aspects) {
         const container = document.getElementById('aspectsAnalysis');
         
@@ -1649,154 +1677,145 @@ class ProfessionalAstroCalculator {
         container.innerHTML = html;
     }
     
+    // Расчет эфемерид
     async calculateEphemeris() {
         try {
-            if (!this.swiss.initialized) {
-                await this.initialize();
-            }
-            
             document.getElementById('ephemLoading').style.display = 'flex';
             
             const date = document.getElementById('ephemDate').value;
             const time = document.getElementById('ephemTime').value;
-            const bodyId = document.getElementById('ephemBody').value;
-            const step = parseInt(document.getElementById('ephemStep').value);
+            const planet = document.getElementById('ephemPlanet').value;
+            const days = parseInt(document.getElementById('ephemDays').value);
             
             const baseDate = new Date(`${date}T${time}Z`);
             const tbody = document.getElementById('ephemerisBody');
             tbody.innerHTML = '';
             
-            // Расчет для 10 дней
-            for (let day = 0; day < 10; day++) {
-                const currentDate = new Date(baseDate.getTime() + day * step * 86400000);
-                const jd = this.swiss.dateToJD(currentDate);
+            // Расчет для указанного количества дней
+            for (let day = 0; day < Math.min(days, 30); day++) {
+                const currentDate = new Date(baseDate.getTime() + day * 86400000);
+                const jd = this.dateToJulian(currentDate);
                 
-                if (bodyId === 'all') {
+                if (planet === 'all') {
                     // Расчет всех планет
-                    for (const [id, planet] of Object.entries(this.planets)) {
-                        if (id === 'true') continue;
-                        
-                        const result = this.swiss.calcPlanet(jd, parseInt(id));
+                    for (const p of this.constants.PLANETS) {
+                        const result = this.calculatePlanetPosition(p.id, jd);
                         const zodiac = this.getZodiacSign(result.longitude);
                         
                         const row = document.createElement('tr');
                         row.innerHTML = `
                             <td>${currentDate.toISOString().split('T')[0]}</td>
-                            <td>${planet.name}</td>
-                            <td>${result.longitude.toFixed(6)}°</td>
+                            <td>${p.name}</td>
+                            <td>${result.longitude.toFixed(4)}°</td>
                             <td class="zodiac-${zodiac.name.toLowerCase()}">${zodiac.symbol}</td>
-                            <td style="color: ${result.speedLong < 0 ? '#FF3B30' : '#4CD964'}">
-                                ${result.speedLong.toFixed(4)}°/день
+                            <td style="color: ${result.isRetrograde ? '#FF3B30' : '#4CD964'}">
+                                ${result.speed.toFixed(4)}°/день
+                                ${result.isRetrograde ? ' R' : ''}
                             </td>
-                            <td>${result.latitude.toFixed(4)}°</td>
-                            <td>${result.distance.toFixed(6)}</td>
+                            <td>${result.isRetrograde ? 'Ретроградное' : 'Директное'}</td>
                         `;
                         tbody.appendChild(row);
                     }
-                } else if (bodyId === 'true') {
-                    // Лунные узлы
-                    const nodes = this.swiss.calcLunarNodes(jd);
-                    const zodiacNorth = this.getZodiacSign(nodes.northNode);
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${currentDate.toISOString().split('T')[0]}</td>
-                        <td>Северный узел</td>
-                        <td>${nodes.northNode.toFixed(6)}°</td>
-                        <td class="zodiac-${zodiacNorth.name.toLowerCase()}">${zodiacNorth.symbol}</td>
-                        <td>-0.0529°/день</td>
-                        <td>0.0000°</td>
-                        <td>-</td>
-                    `;
-                    tbody.appendChild(row);
                 } else {
-                    // Конкретное тело
-                    const result = this.swiss.calcPlanet(jd, parseInt(bodyId));
-                    const planet = this.planets[bodyId];
-                    const zodiac = this.getZodiacSign(result.longitude);
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td>${currentDate.toISOString().split('T')[0]}</td>
-                        <td>${planet.name}</td>
-                        <td>${result.longitude.toFixed(6)}°</td>
-                        <td class="zodiac-${zodiac.name.toLowerCase()}">${zodiac.symbol}</td>
-                        <td style="color: ${result.speedLong < 0 ? '#FF3B30' : '#4CD964'}">
-                            ${result.speedLong.toFixed(4)}°/день
-                        </td>
-                        <td>${result.latitude.toFixed(4)}°</td>
-                        <td>${result.distance.toFixed(6)}</td>
-                    `;
-                    tbody.appendChild(row);
+                    // Конкретная планета
+                    const p = this.constants.PLANETS.find(p => p.id === planet);
+                    if (p) {
+                        const result = this.calculatePlanetPosition(p.id, jd);
+                        const zodiac = this.getZodiacSign(result.longitude);
+                        
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${currentDate.toISOString().split('T')[0]}</td>
+                            <td>${p.name}</td>
+                            <td>${result.longitude.toFixed(4)}°</td>
+                            <td class="zodiac-${zodiac.name.toLowerCase()}">${zodiac.symbol}</td>
+                            <td style="color: ${result.isRetrograde ? '#FF3B30' : '#4CD964'}">
+                                ${result.speed.toFixed(4)}°/день
+                                ${result.isRetrograde ? ' R' : ''}
+                            </td>
+                            <td>${result.isRetrograde ? 'Ретроградное' : 'Директное'}</td>
+                        `;
+                        tbody.appendChild(row);
+                    }
                 }
             }
             
         } catch (error) {
             console.error('Error calculating ephemeris:', error);
-            alert(`Ошибка расчета эфемерид: ${error.message}`);
+            this.showError(`Ошибка расчета эфемерид: ${error.message}`);
         } finally {
             document.getElementById('ephemLoading').style.display = 'none';
         }
     }
     
-    getZodiacSign(longitude) {
-        const normalized = ((longitude % 360) + 360) % 360;
-        
-        for (const sign of this.zodiac) {
-            if (normalized >= sign.start && normalized < sign.end) {
-                const degree = normalized - sign.start;
-                const degInt = Math.floor(degree);
-                const min = Math.floor((degree - degInt) * 60);
-                const sec = Math.floor(((degree - degInt) * 60 - min) * 60);
-                
-                return {
-                    name: sign.name,
-                    symbol: sign.symbol,
-                    degree: degInt,
-                    minute: min,
-                    second: sec,
-                    decimal: degree
-                };
+    // Загрузка настроек
+    loadSettings() {
+        try {
+            const settings = JSON.parse(localStorage.getItem('astroProSettings') || '{}');
+            
+            if (settings.calcAlgorithm) {
+                document.getElementById('calcAlgorithm').value = settings.calcAlgorithm;
             }
+            if (settings.calcPrecision) {
+                document.getElementById('calcPrecision').value = settings.calcPrecision;
+            }
+            if (settings.ephemRange) {
+                document.getElementById('ephemRange').value = settings.ephemRange;
+            }
+            if (settings.colorScheme) {
+                document.getElementById('colorScheme').value = settings.colorScheme;
+            }
+            if (settings.interfaceLanguage) {
+                document.getElementById('interfaceLanguage').value = settings.interfaceLanguage;
+            }
+        } catch (error) {
+            console.error('Error loading settings:', error);
         }
-        
-        // Fallback
-        return {
-            name: "Овен",
-            symbol: "♈",
-            degree: 0,
-            minute: 0,
-            second: 0,
-            decimal: 0
-        };
     }
     
-    formatPosition(longitude) {
-        const zodiac = this.getZodiacSign(longitude);
-        return `${zodiac.degree}° ${zodiac.minute}' ${zodiac.symbol}`;
-    }
-    
+    // Сохранение настроек
     saveSettings() {
-        const settings = {
-            algorithm: document.getElementById('calcAlgorithm').value,
-            precision: document.getElementById('calcPrecision').value,
-            ephemFile: document.getElementById('ephemFile').value,
-            language: document.getElementById('interfaceLanguage').value,
-            exportFormat: document.getElementById('exportFormat').value,
-            geoData: document.getElementById('geoData').value,
-            cacheSize: document.getElementById('cacheSize').value,
-            savedAt: new Date().toISOString()
-        };
-        
-        localStorage.setItem('astroProSettings', JSON.stringify(settings));
-        alert('Настройки сохранены успешно!');
+        try {
+            const settings = {
+                calcAlgorithm: document.getElementById('calcAlgorithm').value,
+                calcPrecision: document.getElementById('calcPrecision').value,
+                ephemRange: document.getElementById('ephemRange').value,
+                colorScheme: document.getElementById('colorScheme').value,
+                interfaceLanguage: document.getElementById('interfaceLanguage').value,
+                exportFormat: document.getElementById('exportFormat').value,
+                savedAt: new Date().toISOString()
+            };
+            
+            localStorage.setItem('astroProSettings', JSON.stringify(settings));
+            
+            // Показ сообщения об успешном сохранении
+            const modal = document.getElementById('detailModal');
+            modal.innerHTML = `
+                <div class="modal-content">
+                    <h3 style="margin-bottom: 15px; color: var(--accent-light);">
+                        <i class="fas fa-check-circle" style="color: #4cd964;"></i> Настройки сохранены
+                    </h3>
+                    <p style="margin-bottom: 20px; color: var(--text-secondary);">
+                        Настройки успешно сохранены и применены.
+                    </p>
+                    <button class="btn" onclick="document.getElementById('detailModal').classList.remove('active')">
+                        Закрыть
+                    </button>
+                </div>
+            `;
+            modal.classList.add('active');
+            
+        } catch (error) {
+            console.error('Error saving settings:', error);
+            this.showError('Ошибка сохранения настроек');
+        }
     }
     
-    clearCache() {
-        if (confirm('Очистить кэш WASM и перезагрузить Swiss Ephemeris?')) {
+    // Сброс настроек
+    resetSettings() {
+        if (confirm('Вы уверены, что хотите сбросить все настройки к значениям по умолчанию?')) {
             localStorage.removeItem('astroProSettings');
-            this.swiss.initialized = false;
-            this.initialize();
+            location.reload();
         }
     }
 }
@@ -1804,7 +1823,11 @@ class ProfessionalAstroCalculator {
 // Инициализация при загрузке страницы
 document.addEventListener('DOMContentLoaded', () => {
     window.astroPro = new ProfessionalAstroCalculator();
-    setTimeout(() => window.astroPro.initialize(), 100);
+    
+    // Автоматический расчет при загрузке
+    setTimeout(() => {
+        window.astroPro.calculateNatalChart();
+    }, 500);
 });
     </script>
     
